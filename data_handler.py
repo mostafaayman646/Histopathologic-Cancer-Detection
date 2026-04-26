@@ -33,7 +33,7 @@ class DataHandler:
                 (e.g., ['dog', 'color', 'glcm']). Defaults to all available features.
             extract_features (bool, optional): If True, forces the extraction of features from
                 scratch, overwriting any existing saved data. Defaults to False.
-            num_samples (int, optional): The maximum number of images to process. Defaults to 10000.
+            num_samples (int, optional): The maximum number of images to process. Defaults to 10000. -1 processes all.
         """
         self.data_csv_path = data_csv_path
         self.images_dir = images_dir
@@ -78,7 +78,15 @@ class DataHandler:
         provided during class initialization.
         """
         X, Y = [], []
-        num_samples_to_process = min(self.num_samples, len(self.training_files))
+        total_files = len(self.training_files)
+
+        # If -1 is passed, process all files. Otherwise, take the minimum.
+        if self.num_samples == -1:
+            num_samples_to_process = total_files
+            print(f"Processing ALL {total_files} samples")
+        else:
+            num_samples_to_process = min(self.num_samples, total_files)
+            print(f"Processing {num_samples_to_process} out of {total_files} samples")
 
         for i in tqdm(range(num_samples_to_process), desc="Extracting features"):
             file_name = self.training_files[i]
@@ -146,7 +154,8 @@ if __name__ == "__main__":
     parser.add_argument('--images', type=str, default='/kaggle/input/histopathologic-cancer-detection/train',
                         help='Path to image directory')
     parser.add_argument('--output_dir', type=str, default='./', help='Directory to save output arrays')
-    parser.add_argument('--samples', type=int, default=10000, help='Number of samples to process')
+    parser.add_argument('--samples', type=int, default=-1,
+                        help='Number of samples to process. Default is -1 (ALL samples).')
     parser.add_argument('--features', nargs='+', default=['dog', 'color', 'glcm', 'lbp', 'lbglcm', 'glrlm', 'sfta'],
                         help='List of features to extract')
     args = parser.parse_args()
