@@ -117,6 +117,10 @@ class DataHandler:
                 features_to_concat.append(features.extract_sfta_features(img_gray, n_levels=3))
 
             combined_fd = np.concatenate(features_to_concat)
+            
+            if len(X)>0 and len(combined_fd) != len(X[0]):
+                raise ValueError(
+                    f"Shape mismatch at image {i}! Expected {len(X[0])} features, but got {len(combined_fd)}.")
 
             X.append(combined_fd)
             Y.append(label)

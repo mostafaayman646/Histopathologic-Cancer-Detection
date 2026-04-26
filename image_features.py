@@ -97,7 +97,8 @@ def extract_lbp_features(img_gray):
     radius = 1
     n_points = 8 * radius
     lbp = local_binary_pattern(img_gray, n_points, radius, method='uniform')
-    n_bins = int(lbp.max() + 1)
+    n_bins = n_points + 2
+    # n_bins = int(lbp.max() + 1)
     hist, _ = np.histogram(lbp.ravel(), bins=n_bins, range=(0, n_bins))
     hist = hist.astype("float")
     hist /= (hist.sum() + 1e-7)
@@ -117,7 +118,9 @@ def extract_lbglcm_features(img_gray):
     radius = 1
     n_points = 8 * radius
     lbp_img = local_binary_pattern(img_gray, n_points, radius, method='uniform').astype(np.uint8)
-    glcm = graycomatrix(lbp_img, distances=[1], angles=[0], levels=int(lbp_img.max() + 1), symmetric=True, normed=True)
+    n_bins = n_points + 2
+    # glcm = graycomatrix(lbp_img, distances=[1], angles=[0], levels=int(lbp_img.max() + 1), symmetric=True, normed=True)
+    glcm = graycomatrix(lbp_img, distances=[1], angles=[0], levels=n_bins, symmetric=True, normed=True)
     contrast = graycoprops(glcm, 'contrast')[0, 0]
     dissimilarity = graycoprops(glcm, 'dissimilarity')[0, 0]
     homogeneity = graycoprops(glcm, 'homogeneity')[0, 0]
