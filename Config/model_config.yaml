@@ -1,7 +1,2 @@
-#R2 Score: 0.7353323698043823
-model_name: XGB_Boost
-parameters:
-  model__learning_rate: 0.09198169406200574
-  model__max_depth: 9
-  model__n_estimators: 82
-  model__subsample: 0.8
+model_name: Random_Forest
+parameters: {}
