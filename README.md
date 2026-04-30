@@ -106,34 +106,40 @@ where $N(\epsilon)$ is the number of boxes of side length $\epsilon$ required to
 ---
 
 ## Training Pipeline
-The training architecture (`train.py`) utilizes a robust, scikit-learn-based pipeline designed for scalability and rigor. 
+The training architecture (`train.py`) utilizes a robust, scikit-learn-based pipeline designed for scalability and rigor for binary classification. 
 
 ### Preprocessing
 1. **Dimensionality Expansion:** Numerical features are passed through `PolynomialFeatures` to capture non-linear, interactive relationships between the complex biological metrics.
-2. **Scaling:** Data is standardized using `StandardScaler` (or optionally `MinMaxScaler`) to ensure uniform feature contribution across the loss landscape.
+2. **Scaling:** Data is standardized using `StandardScaler` (or optionally `MinMaxScaler`) to ensure uniform feature contribution.
 3. **Categorical Handling:** Any categorical variables are parsed through a `OneHotEncoder`.
 
 ### Model Optimization
-The pipeline supports Support Vector Regression (`SVR`) and eXtreme Gradient Boosting (`XGBRegressor`). Hyperparameter optimization is fully automated through two available search strategies:
-* **Randomized Search:** Rapid, stochastic exploration of the parameter grid using cross-validation.
+The pipeline currently evaluates **Random Forest Classifier**, **Support Vector Machines (SVR)**, and **eXtreme Gradient Boosting (XGBoost)**. Training is optimized through three available strategies:
+* **Bypass Search:** Direct training using base parameters (fastest approach, standard configurations).
+* **Randomized Search:** Rapid, stochastic exploration of the hyperparameter grid using cross-validation.
 * **Bayesian Optimization:** Utilizes `skopt.BayesSearchCV` to efficiently navigate the hyperparameter space based on prior trial performance.
 
 ---
 
 ## Model Performance
-The current production model utilizes **XGBoost** and was evaluated using the $R^2$ regression metric. The optimal weights and configurations are automatically tracked and serialized.
+The current production model utilizes a **Random Forest Classifier** trained directly on the base parameters. It was evaluated on a hidden test dataset comprising 20% of the total data.
 
 ### Current Best Results
-* **Model:** XGBoost Regressor
-* **Validation $R^2$ Score:** 0.7353
+* **Model:** Random Forest Classifier (Base Parameters)
+* **Test Accuracy:** 0.8876
+* **Test ROC AUC:** 0.9542
 
-**Optimal Hyperparameters:**
-* `learning_rate`: 0.09198
-* `max_depth`: 9
-* `n_estimators`: 82
-* `subsample`: 0.8
+**Classification Report:**
 
-*(Note: Configuration states are saved dynamically to `Config/model_config.yaml`.)*
+| Class | Precision | Recall | F1-Score | Support |
+| :--- | :--- | :--- | :--- | :--- |
+| **0 (Normal)** | 0.89 | 0.92 | 0.91 | 26,182 |
+| **1 (Cancer)** | 0.88 | 0.84 | 0.86 | 17,823 |
+| **Accuracy** | | | **0.89** | 44,005 |
+| **Macro Avg** | 0.89 | 0.88 | 0.88 | 44,005 |
+| **Weighted Avg** | 0.89 | 0.89 | 0.89 | 44,005 |
+
+*(Note: Configuration states are saved dynamically to `Config/model_config.yaml` and the optimal model is serialized to `Models/model_rf.pkl`.)*
 
 ---
 
@@ -152,12 +158,11 @@ python data_handler.py \
 *(Set `--samples` to a specific integer to test on a smaller subset, or `-1` for the full dataset).*
 
 ### 2. Model Training
-To train the models using the extracted features:
+To train the models using the extracted features and bypass the grid search to replicate the Random Forest results:
 ```bash
 python train.py \
-    --data_path "Data/extracted_features_dog_color_glcm_lbp_lbglcm_glrlm_sfta.npz" \
     --preprocessing StandardScaler \
     --Degree 1 \
-    --Random_Search True \
+    --bypass_search True \
     --save_model True
 ```
