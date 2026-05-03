@@ -19,7 +19,7 @@ def extract_advanced_stats(img_gray, blobs):
     if len(blobs) == 0:
         return np.zeros(11)
 
-    radii = blobs[:, 2] * sqrt(2)
+    radii = blobs[:, 2] * sqrt(2) # radius = sigma * sqrt(2)
     count = len(blobs)
     mean_radius = np.mean(radii)
     std_radius = np.std(radii)

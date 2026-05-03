@@ -62,46 +62,69 @@ The `image_features.py` module extracts 7 distinct families of hand-crafted feat
 
 ### 1. Difference of Gaussians (DoG)
 DoG is an edge-enhancement algorithm used to detect blob-like structures, making it highly effective for isolating cell nuclei. It works by convolving the original image $I(x,y)$ with two 2D Gaussian kernels of differing standard deviations ($\sigma_1$ and $\sigma_2$) and subtracting the results:
-$$D(x,y) = I(x,y) * G(x,y,\sigma_1) - I(x,y) * G(x,y,\sigma_2)$$
-where $G(x,y,\sigma) = \frac{1}{2\pi\sigma^2} e^{-(x^2+y^2)/(2\sigma^2)}$. The pipeline extracts 11 spatial statistics from this output, including blob count and Euclidean distances between structures.
 
-[//]: # ()
-[//]: # (<img alt="DoG Nuclei Visualization" src="Images/dog_visualization.png" width="700">)
+$$
+D(x,y) = I(x,y) * G(x,y,\sigma_1) - I(x,y) * G(x,y,\sigma_2)
+$$
+
+where $G(x,y,\sigma) = \frac{1}{2\pi\sigma^2} e^{-(x^2+y^2)/(2\sigma^2)}$. The pipeline extracts 11 spatial statistics from this output, including blob count and Euclidean distances between structures.
+* **Biological Intuition:** Quantifies *pleomorphism* (irregular nuclear size) and crowding, which are primary morphological hallmarks of malignancy.
 
 ### 2. Color Statistics
 To quantify staining variability and tissue density independently of illumination, the BGR image is transformed into the HSV (Hue, Saturation, Value) color space. Statistical moments are then computed for each channel $c$:
-$$\mu_c = \frac{1}{N} \sum_{i=1}^{N} c_i$$
-$$\sigma_c = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (c_i - \mu_c)^2}$$
 
-[//]: # (<img alt="HSV Scatter Plot" src="Images/hsv_scatter.png" width="700">)
+$$
+\mu_c = \frac{1}{N} \sum_{i=1}^{N} c_i
+$$
+
+$$
+\sigma_c = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (c_i - \mu_c)^2}
+$$
+
+* **Biological Intuition:** Captures *hyperchromasia*; malignant nuclei absorb hematoxylin stain differently, causing distinct mathematical shifts in the Hue and Saturation distributions.
 
 ### 3. Gray-Level Co-occurrence Matrix (GLCM)
 GLCM evaluates macro-texture by analyzing the spatial relationships of pixel intensities. It counts the frequency at which pairs of pixels with specific gray-level values ($i$ and $j$) occur adjacent to each other at a defined distance and angle. From the resulting normalized probability matrix $p(i,j)$, structural metrics like contrast are derived:
-$$Contrast = \sum_{i,j} |i - j|^2 p(i,j)$$
 
-[//]: # (<img alt="GLCM Heatmap" src="Images/glcm_heatmap.png" width="700">)
+$$
+Contrast = \sum_{i,j} |i - j|^2 p(i,j)
+$$
+
+* **Biological Intuition:** Measures structural chaos. Healthy tissue yields high homogeneity, while the fragmented nature of cancer tissue generates high contrast scores.
 
 ### 4. Local Binary Patterns (LBP)
 LBP is a micro-texture descriptor that labels every pixel by thresholding its circular neighborhood. For a center pixel $g_c$ and its $P$ neighbors $g_p$, a neighbor is assigned a 1 if its intensity is $\ge g_c$, and a 0 otherwise. These binary values are concatenated into a decimal value representing the local structural pattern:
-$$LBP_{P,R} = \sum_{p=0}^{P-1} s(g_p - g_c) 2^p$$
-where $s(x) = 1$ if $x \ge 0$, and $0$ otherwise.
 
-[//]: # (<img alt="LBP Transformation" src="Images/lbp_transformation.png" width="800">)
+$$
+LBP_{P,R} = \sum_{p=0}^{P-1} s(g_p - g_c) 2^p
+$$
+
+where $s(x) = 1$ if $x \ge 0$, and $0$ otherwise.
+* **Biological Intuition:** Translates the microscopic cellular boundaries into a histogram of geometric shapes (edges, corners, flat spots), revealing irregular cellular membranes.
 
 ### 5. Hybrid LBGLCM
 This approach captures highly complex, second-order spatial-texture relationships. It first applies the LBP transformation to encode local micro-textures across the image array. Next, a GLCM matrix is computed *on top* of the LBP output, evaluating the macro-spatial relationships of those micro-textures ($GLCM(LBP(I))$).
+* **Biological Intuition:** Identifies complex meta-patterns, such as whether chaotic microscopic edges tend to cluster together in dense malignant tumors.
 
 ### 6. Gray Level Run-Length Matrix (GLRLM)
 GLRLM extracts directional patterns by assessing consecutive sequences (runs) of identical pixel values. The matrix $P(i,j)$ tallies the number of runs of gray level $i$ possessing a length of $j$. This yields metrics like Short Run Emphasis (SRE):
-$$SRE = \frac{1}{N_r} \sum_{i,j} \frac{P(i,j)}{j^2}$$
+
+$$
+SRE = \frac{1}{N_r} \sum_{i,j} \frac{P(i,j)}{j^2}
+$$
+
 where $N_r$ is the total number of runs.
+* **Biological Intuition:** Normal connective tissue often presents as long, continuous pixel runs, whereas the erratic growth of cancer cells breaks these runs into short, high-frequency fragments.
 
 ### 7. Segmentation-based Fractal Texture Analysis (SFTA)
 SFTA evaluates fractal dimensions by decomposing the image into binary layers via multi-level thresholding. It computes the area, mean, and standard deviation for the resulting regions, and evaluates boundary complexity using the box-counting fractal dimension $D_0$:
-$$D_0 = \lim_{\epsilon \to 0} \frac{\log N(\epsilon)}{\log (1/\epsilon)}$$
-where $N(\epsilon)$ is the number of boxes of side length $\epsilon$ required to cover the region boundary.
 
-[//]: # (<img alt="SFTA Binary Decomposition" src="Images/sfta_decomposition.png" width="1000">)
+$$
+D_0 = \lim_{\epsilon \to 0} \frac{\log N(\epsilon)}{\log (1/\epsilon)}
+$$
+
+where $N(\epsilon)$ is the number of boxes of side length $\epsilon$ required to cover the region boundary.
+* **Biological Intuition:** Measures the "jaggedness" of the tissue landscape; malignant boundaries exhibit high fractal complexity compared to the smooth boundaries of healthy cells.
 
 ---
 
